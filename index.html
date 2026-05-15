@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Ultra Pro</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.app{
+  width:330px;
+  height:680px;
+  background: rgba(30,30,47,0.95);
+  border-radius:25px;
+  padding:15px;
+  color:white;
+  overflow:auto;
+  box-shadow:0 0 40px rgba(0,0,0,0.6);
+}
+
+.pantalla{display:none;}
+.activa{display:block;}
+
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:10px;
+  border:none;
+  background:#111;
+  color:white;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  margin:4px 0;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  background: linear-gradient(45deg,#6a11cb,#2575fc);
+  color:white;
+  font-weight:bold;
+}
+
+button:hover{transform:scale(1.05);}
+.volver{background:#555;}
+
+#chat p{
+  padding:8px;
+  border-radius:10px;
+  margin:5px 0;
+}
+
+/* CALCULADORA */
+.calc-grid{
+display:grid;
+grid-template-columns: repeat(4,1fr);
+gap:8px;
+}
+
+.calc-grid button{
+padding:15px;
+font-size:16px;
+background:#222;
+color:white;
+border-radius:10px;
+}
+.calc-grid button:hover{background:#444;}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- MENU -->
+<div id="menu" class="pantalla activa">
+<h2>App Ultra 😎</h2>
+
+<input id="numero" placeholder="Número">
+<input id="porcentaje" placeholder="%">
+
+<button onclick="descuento()">Descuento</button>
+<button onclick="recargo()">Recargo</button>
+<button onclick="iva()">IVA</button>
+
+<button onclick="irCuotas()">Cuotas</button>
+<button onclick="irCientifica()">Científica</button>
+<button onclick="irChat()">🤖 IA</button>
+
+<p id="resultado"></p>
+</div>
+
+<!-- CUOTAS -->
+<div id="cuotasPantalla" class="pantalla">
+<h2>Cuotas</h2>
+
+<input id="precio" placeholder="Precio">
+<input id="iva2" placeholder="IVA %">
+<input id="cuotasNum" placeholder="Cuotas">
+
+<button onclick="calcularCuotas()">Calcular</button>
+
+<textarea id="problema" placeholder="Ej: 60000 21 12"></textarea>
+<button onclick="resolverProblema()">Resolver</button>
+
+<p id="resultadoCuotas"></p>
+
+<button class="volver" onclick="volver()">⬅ Volver</button>
+</div>
+
+<!-- CIENTIFICA -->
+<div id="cientificaPantalla" class="pantalla">
+
+<h2>Calculadora Científica 🧮</h2>
+
+<input id="pantallaCalc" readonly style="
+font-size:22px;
+text-align:right;
+padding:15px;
+margin-bottom:10px;
+background:black;
+color:#00ffcc;
+border-radius:10px;
+">
+
+<div class="calc-grid">
+
+<button onclick="agregar('7')">7</button>
+<button onclick="agregar('8')">8</button>
+<button onclick="agregar('9')">9</button>
+<button onclick="agregar('/')">÷</button>
+
+<button onclick="agregar('4')">4</button>
+<button onclick="agregar('5')">5</button>
+<button onclick="agregar('6')">6</button>
+<button onclick="agregar('*')">×</button>
+
+<button onclick="agregar('1')">1</button>
+<button onclick="agregar('2')">2</button>
+<button onclick="agregar('3')">3</button>
+<button onclick="agregar('-')">-</button>
+
+<button onclick="agregar('0')">0</button>
+<button onclick="calcular()">=</button>
+<button onclick="limpiar()">C</button>
+<button onclick="agregar('+')">+</button>
+
+<button onclick="raiz()">√</button>
+<button onclick="potencia()">x²</button>
+<button onclick="log()">log</button>
+<button onclick="ln()">ln</button>
+
+<button onclick="seno()">sin</button>
+<button onclick="coseno()">cos</button>
+<button onclick="tangente()">tan</button>
+<button onclick="agregar('.')">.</button>
+
+</div>
+
+<h3>Historial</h3>
+<div id="historial"></div>
+
+<h3>Notación científica</h3>
+<input id="numeroCientifico">
+<button onclick="convertirCientifica()">Convertir</button>
+<p id="resultadoCientifico"></p>
+
+<button class="volver" onclick="volver()">⬅ Volver</button>
+
+</div>
+
+<!-- CHAT IA -->
+<div id="chatPantalla" class="pantalla">
+<h2>IA 🤖</h2>
+
+<div id="chat" style="height:260px;overflow:auto;background:#000;padding:10px;border-radius:10px;"></div>
+
+<input id="mensaje" placeholder="Escribí...">
+<button onclick="enviarMensaje()">Enviar</button>
+
+<button class="volver" onclick="volver()">⬅ Volver</button>
+</div>
+
+</div>
+
+<script>
+
+/* PANTALLAS */
+function cambiarPantalla(id){
+document.querySelectorAll(".pantalla").forEach(p=>p.classList.remove("activa"));
+document.getElementById(id).classList.add("activa");
+}
+function irCuotas(){cambiarPantalla("cuotasPantalla");}
+function irCientifica(){cambiarPantalla("cientificaPantalla");}
+function irChat(){cambiarPantalla("chatPantalla");}
+function volver(){cambiarPantalla("menu");}
+
+/* BASICO */
+function getVal(){
+let n=parseFloat(numero.value);
+let p=parseFloat(porcentaje.value);
+if(isNaN(n)||isNaN(p))return null;
+return {n,p};
+}
+function descuento(){let d=getVal();if(!d)return;resultado.innerText=d.n-(d.n*d.p/100);}
+function recargo(){let d=getVal();if(!d)return;resultado.innerText=d.n+(d.n*d.p/100);}
+function iva(){let d=getVal();if(!d)return;resultado.innerText=d.n+(d.n*d.p/100);}
+
+/* CUOTAS */
+function calcularCuotas(){
+let p=parseFloat(precio.value);
+let i=parseFloat(iva2.value);
+let c=parseInt(cuotasNum.value);
+if(isNaN(p)||isNaN(i)||isNaN(c))return;
+resultadoCuotas.innerText=(p+(p*i/100))/c;
+}
+function resolverProblema(){
+let n=problema.value.match(/\d+/g);
+if(!n||n.length<3)return;
+resultadoCuotas.innerText=(n[0]+(n[0]*n[1]/100))/n[2];
+}
+
+/* CALCULADORA */
+function agregar(v){pantallaCalc.value+=v;}
+function limpiar(){pantallaCalc.value="";}
+function calcular(){
+try{
+let r=eval(pantallaCalc.value);
+guardar(pantallaCalc.value+"="+r);
+pantallaCalc.value=r;
+}catch{pantallaCalc.value="Error";}
+}
+function raiz(){pantallaCalc.value=Math.sqrt(eval(pantallaCalc.value));}
+function seno(){pantallaCalc.value=Math.sin(eval(pantallaCalc.value));}
+function coseno(){pantallaCalc.value=Math.cos(eval(pantallaCalc.value));}
+function tangente(){pantallaCalc.value=Math.tan(eval(pantallaCalc.value));}
+function potencia(){pantallaCalc.value=Math.pow(eval(pantallaCalc.value),2);}
+function log(){pantallaCalc.value=Math.log10(eval(pantallaCalc.value));}
+function ln(){pantallaCalc.value=Math.log(eval(pantallaCalc.value));}
+
+/* HISTORIAL */
+function guardar(t){
+let h=JSON.parse(localStorage.getItem("hist"))||[];
+h.unshift(t);
+localStorage.setItem("hist",JSON.stringify(h));
+mostrarHistorial();
+}
+function mostrarHistorial(){
+let h=JSON.parse(localStorage.getItem("hist"))||[];
+historial.innerHTML="";
+h.forEach(x=>{
+let p=document.createElement("p");
+p.innerText=x;
+historial.appendChild(p);
+});
+}
+window.onload=mostrarHistorial;
+
+/* NOTACION */
+function convertirCientifica(){
+let num=parseFloat(numeroCientifico.value);
+if(isNaN(num))return;
+let exp=Math.floor(Math.log10(Math.abs(num)));
+let man=num/Math.pow(10,exp);
+resultadoCientifico.innerText=man.toFixed(2)+" × 10^"+exp;
+}
+
+/* IA ULTRA */
+function enviarMensaje(){
+let texto = mensaje.value.trim();
+if(!texto) return;
+
+chat.innerHTML += "<p style='background:#2575fc;'>Vos: "+texto+"</p>";
+mensaje.value="";
+
+let memoria = JSON.parse(localStorage.getItem("ia_memoria")) || {};
+let historial = JSON.parse(localStorage.getItem("ia_historial")) || [];
+historial.push(texto);
+localStorage.setItem("ia_historial", JSON.stringify(historial));
+
+let respuesta="";
+
+function estilo(msg){
+let e=[" 😎"," 🔥"," 🎮"," 🚀"];
+return msg+e[Math.floor(Math.random()*e.length)];
+}
+
+function calc(t){
+try{
+let limpio=t.replace(/x/g,"*").replace(/÷/g,"/").replace(/[^0-9\+\-\*\/\.\(\)]/g,"");
+if(limpio){
+let r=eval(limpio);
+if(!isNaN(r)) return "Resultado: "+r;
+}
+}catch{}
+return null;
+}
+
+if(texto.includes("=")){
+let p=texto.split("=");
+memoria[p[0].toLowerCase().trim()]=p[1].trim();
+localStorage.setItem("ia_memoria",JSON.stringify(memoria));
+respuesta="Aprendido";
+}
+else if(memoria[texto.toLowerCase()]){
+respuesta="Me enseñaste que "+texto+" = "+memoria[texto.toLowerCase()];
+}
+else if(calc(texto)){
+respuesta=calc(texto);
+}
+else if(texto.includes("iva")){
+respuesta="21% en Argentina";
+}
+else if(texto.includes("porcentaje")){
+respuesta="número × % / 100";
+}
+else if(texto.includes("hola")){
+respuesta="Hola 😄";
+}
+else{
+respuesta="No sé eso pero puedo aprender 😏";
+}
+
+respuesta=estilo(respuesta);
+
+chat.innerHTML += "<p style='background:#444;'>IA: "+respuesta+"</p>";
+chat.scrollTop=chat.scrollHeight;
+}
+
+</script>
+
+</body>
+</html>
